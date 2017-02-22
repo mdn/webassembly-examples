@@ -18,21 +18,30 @@ function fetchAndInstantiate(url, importObject) {
 // This library function fetches the wasm Module at 'url', instantiates it with
 // the given 'importObject', and returns a Promise resolving to the finished
 // wasm Instance. Additionally, the function attempts to cache the compiled wasm
-// Module in IndexedDB using 'url' as the key. Thus, the caller must ensure that
-// 'url' uniquely identifies the Module.
-
-function instantiateCachedURL(url, importObject) {
-  const dbName = 'wasm-modules';
-  const storeName = 'wasm-modules';
+// Module in IndexedDB using 'url' as the key. The entire site's wasm cache (not
+// just the given URL) is versioned by dbVersion and any change in dbVersion on
+// any call to instantiateCachedURL() will conservatively clear out the entire
+// cache to avoid stale modules.
+function instantiateCachedURL(dbVersion, url, importObject) {
+  const dbName = 'wasm-cache';
+  const storeName = 'wasm-cache';
 
   // This helper function Promise-ifies the operation of opening an IndexedDB
-  // database.
+  // database and clearing out the cache when the version changes.
   function openDatabase() {
     return new Promise((resolve, reject) => {
-      var request = indexedDB.open(dbName, 1);
-      request.onerror = reject.bind(null, 'error opening database');
-      request.onupgradeneeded = () => { request.result.createObjectStore(storeName) };
+      var request = indexedDB.open(dbName, dbVersion);
+      request.onerror = reject.bind(null, 'Error opening wasm cache database');
       request.onsuccess = () => { resolve(request.result) };
+      request.onupgradeneeded = event => {
+        var db = request.result;
+        if (db.objectStoreNames.contains(storeName)) {
+            console.log(`Clearing out version ${event.oldVersion} wasm cache`);
+            db.deleteObjectStore(storeName);
+        }
+        console.log(`Creating version ${event.newVersion} wasm cache`);
+        db.createObjectStore(storeName)
+      };
     });
   }
 
@@ -42,12 +51,12 @@ function instantiateCachedURL(url, importObject) {
     return new Promise((resolve, reject) => {
       var store = db.transaction([storeName]).objectStore(storeName);
       var request = store.get(url);
-      request.onerror = reject.bind(null, `error getting wasm module ${url}`);
+      request.onerror = reject.bind(null, `Error getting wasm module ${url}`);
       request.onsuccess = event => {
         if (request.result)
           resolve(request.result);
         else
-          reject(`${url} was not found in object store`);
+          reject(`Module ${url} was not found in wasm cache`);
       }
     });
   }
@@ -57,7 +66,8 @@ function instantiateCachedURL(url, importObject) {
   function storeInDatabase(db, module) {
     var store = db.transaction([storeName], 'readwrite').objectStore(storeName);
     var request = store.put(module, url);
-    request.onerror = err => { console.log(`Failed to store in wasm database: ${err}`) };
+    request.onerror = err => { console.log(`Failed to store in wasm cache: ${err}`) };
+    request.onsuccess = err => { console.log(`Successfully stored ${url} in wasm cache`) };
   }
 
   // This helper function fetches 'url', compiles it into a Module,
@@ -76,7 +86,7 @@ function instantiateCachedURL(url, importObject) {
     // Now see if we already have a compiled Module with key 'url' in 'db':
     return lookupInDatabase(db).then(module => {
       // We do! Instantiate it with the given import object.
-      console.log(`Found ${url} in wasm database`);
+      console.log(`Found ${url} in wasm cache`);
       return WebAssembly.instantiate(module, importObject);
     }, errMsg => {
       // Nope! Compile from scratch and then store the compiled Module in 'db'
@@ -88,11 +98,11 @@ function instantiateCachedURL(url, importObject) {
       });
     })
   },
-  err => {
+  errMsg => {
     // If opening the database failed (due to permissions or quota), fall back
     // to simply fetching and compiling the module and don't try to store the
     // results.
-    console.log(`Unable to open wasm database: ${err}`);
+    console.log(errMsg);
     return fetchAndInstantiate().then(results =>
       results.instance
     );
