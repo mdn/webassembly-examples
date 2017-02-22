@@ -8,7 +8,7 @@
 // This version should be bumped any time any wasm module in the site is updated
 // or moved to a different URL. It ensures that stale modules are not used or
 // left dangling in the cache.
-const wasmVersion = 2;
+const wasmVersion = 1s;
 
 // Using this library function:
 instantiateCachedURL(wasmVersion, 'indexeddb-cache.wasm').then(instance =>
