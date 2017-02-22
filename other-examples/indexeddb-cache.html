@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+<head><meta charset="utf8"></head>
+<body>
+
+<script src="../wasm-utils.js"></script>
+<script>
+// Using this library function:
+instantiateCachedURL('indexeddb-cache.wasm').then(instance =>
+  console.log("Instance says the answer is: " + instance.exports.answer())
+).catch(err =>
+  console.error("Failure to instantiate: " + err)
+);
+</script>
+
+</body>
+</html>

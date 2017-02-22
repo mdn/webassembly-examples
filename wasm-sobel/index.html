@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang='en'>
+
+<head>
+    <meta charset='utf-8' />
+    <title>WASM Sobel Example</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        video {
+            position: absolute;
+            visibility: hidden;
+        }
+        
+        div {
+            border: 8px;
+            padding-left: 0;
+            padding-right: 0;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+            width: 600px;
+        }
+        
+        canvas {
+            border: 3px solid gray;
+        }
+        
+        button {
+            color: #fff;
+            background-color: #6496c8;
+            border: none;
+            border-radius: 5px;
+            display: inline-block;
+            min-width: 50px;
+            width: 80px;
+            padding: 5px 10px;
+        }
+    </style>
+    <script src="smoothie.js"></script>
+    <script src='sobel.js'></script>
+
+</head>
+
+<body>
+    <div>
+        <h1>Web Assembly JavaScript Sobel Example</h1>
+        <label>Use Performance Tab in Developer Tools to see Avg FPS</label>
+        <video id='vid'></video>
+        <canvas id='mycanvas'></canvas>
+        <button id='grey'>Toggle JavaScript</button>
+        <label>Frame composition time in ms: </label>
+        <output id='updatetime' name='updatetime'></output>
+        <canvas id="chart" width="600" height="100"></canvas>
+    </div>
+
+
+    <script type='text/javascript'>
+        var Module = {};
+        fetch('change.wasm')
+            .then(response => response.arrayBuffer())
+            .then(buffer => {
+                Module.wasmBinary = buffer;
+                var script = document.createElement('script');
+                script.src = "change.js";
+                script.onload = function() {
+                    console.log("Emscripten boilerplate loaded.")
+
+                }
+                document.body.appendChild(script);
+            });
+    </script>
+
+</body>
+
+</html>

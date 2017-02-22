@@ -1,0 +1,30 @@
+<!doctype html>
+
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <title>Shared address space example</title>
+  </head>
+
+  <body>
+    <script src="../wasm-utils.js"></script>
+    <script>
+    var importObj = {
+      js: {
+        memory : new WebAssembly.Memory({ initial: 1 }),
+        table : new WebAssembly.Table({ initial: 1, element: "anyfunc" })
+      }
+    };
+
+    Promise.all([
+      fetchAndInstantiate('shared0.wasm', importObj),
+      fetchAndInstantiate('shared1.wasm', importObj)
+    ]).then(function(results) {
+      console.log(results[1].exports.doIt());  // prints 42
+    });
+
+    </script>
+  </body>
+
+</html>

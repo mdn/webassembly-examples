@@ -1,0 +1,36 @@
+<!doctype html>
+
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <title>Simple logging example 2: text logging</title>
+  </head>
+
+  <body>
+    <script src="../wasm-utils.js"></script>
+    <script>
+      var memory = new WebAssembly.Memory({ initial : 1 });
+
+      function consoleLogString(offset, length) {
+        var bytes = new Uint8Array(memory.buffer, offset, length);
+        var string = new TextDecoder('utf8').decode(bytes);
+        console.log(string);
+      }
+
+      var importObject = {
+        console: {
+          log: consoleLogString
+        },
+        js: {
+          mem: memory
+        }
+      };
+
+      fetchAndInstantiate('logger2.wasm', importObject).then(function(instance) {
+        instance.exports.writeHi();
+      });
+    </script>
+  </body>
+
+</html>

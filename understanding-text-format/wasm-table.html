@@ -1,0 +1,21 @@
+<!doctype html>
+
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <title>WASM Table example</title>
+  </head>
+
+  <body>
+    <script src="../wasm-utils.js"></script>
+    <script>
+      fetchAndInstantiate('wasm-table.wasm').then(function(instance) {
+        console.log(instance.exports.callByIndex(0)); // returns 42
+        console.log(instance.exports.callByIndex(1)); // returns 13
+        console.log(instance.exports.callByIndex(2)); // returns an error, because there is no index position 2 in the table
+      });
+    </script>
+  </body>
+
+</html>

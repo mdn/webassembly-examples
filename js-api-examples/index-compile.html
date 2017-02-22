@@ -1,0 +1,35 @@
+<!doctype html>
+
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <title>WASM test</title>
+  </head>
+
+  <body>
+    <script>
+      var importObject = {
+        imports: {
+          imported_func: function(arg) {
+            console.log(arg);
+          }
+        }
+      };
+
+      fetch('simple.wasm').then(function(response) {
+        response.arrayBuffer().then(function(bytes) {
+          WebAssembly.compile(bytes).then(function(mod) {
+            var exports = WebAssembly.Module.exports(mod);
+            console.log(exports[0]);
+            var testMod = new WebAssembly.Module(bytes);
+            var testInst = new WebAssembly.Instance(testMod, importObject);
+            var instance = new WebAssembly.Instance(mod, importObject);
+            instance.exports.exported_func();
+          })
+        })
+      });
+    </script>
+  </body>
+
+</html>
