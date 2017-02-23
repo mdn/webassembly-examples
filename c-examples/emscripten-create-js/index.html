@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>WASM Hello World example</title>
+</head>
+
+<body>
+    <h1>Web Assembly Hello World example</h1>
+    <button id="mybutton">Run myFunction</button>
+    <script type="text/javascript">
+        var Module = {};
+        fetch('hello2.wasm').then(response => response.arrayBuffer()).then(buffer => {
+            Module.wasmBinary = buffer;
+            var script = document.createElement('script');
+            script.src = 'hello2.js';
+            script.onload = function() {
+                console.log('Emscripten boilerplate loaded.')
+            }
+            document.body.appendChild(script);
+
+            document.getElementById('mybutton').addEventListener('click', function(){
+              alert('check console');
+              var result = Module.ccall('myFunction', // name of C function
+                                        null, // return type
+                                        null, // argument types
+                                        null); // arguments
+              });
+        });
+    </script>
+</body>
+
+</html>
