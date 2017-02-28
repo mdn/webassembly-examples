@@ -1121,11 +1121,14 @@ Module["stackTrace"] = stackTrace;
 
 // Memory management
 
-var PAGE_SIZE = 4096;
+var PAGE_SIZE = 16384;
+var WASM_PAGE_SIZE = 65536;
+var ASMJS_PAGE_SIZE = 16777216;
+var MIN_TOTAL_MEMORY = 16777216;
 
-function alignMemoryPage(x) {
-  if (x % 4096 > 0) {
-    x += (4096 - (x % 4096));
+function alignUp(x, multiple) {
+  if (x % multiple > 0) {
+    x += multiple - (x % multiple);
   }
   return x;
 }
@@ -1188,21 +1191,7 @@ function enlargeMemory() {
 
 var TOTAL_STACK = Module['TOTAL_STACK'] || 5242880;
 var TOTAL_MEMORY = Module['TOTAL_MEMORY'] || 16777216;
-
-var WASM_PAGE_SIZE = 64 * 1024;
-
-var totalMemory = WASM_PAGE_SIZE;
-while (totalMemory < TOTAL_MEMORY || totalMemory < 2*TOTAL_STACK) {
-  if (totalMemory < 16*1024*1024) {
-    totalMemory *= 2;
-  } else {
-    totalMemory += 16*1024*1024;
-  }
-}
-if (totalMemory !== TOTAL_MEMORY) {
-  Module.printErr('increasing TOTAL_MEMORY to ' + totalMemory + ' to be compliant with the asm.js spec (and given that TOTAL_STACK=' + TOTAL_STACK + ')');
-  TOTAL_MEMORY = totalMemory;
-}
+if (TOTAL_MEMORY < TOTAL_STACK) Module.printErr('TOTAL_MEMORY should be larger than TOTAL_STACK, was ' + TOTAL_MEMORY + '! (TOTAL_STACK=' + TOTAL_STACK + ')');
 
 // Initialize the runtime's memory
 // check for full engine support (use string 'subarray' to avoid closure compiler confusion)
@@ -1610,7 +1599,7 @@ function integrateWasmJS(Module) {
 
   var wasmTextFile = Module['wasmTextFile'] || 'hello.wast';
   var wasmBinaryFile = Module['wasmBinaryFile'] || 'hello.wasm';
-  var asmjsCodeFile = Module['asmjsCodeFile'] || 'hello.asm.js';
+  var asmjsCodeFile = Module['asmjsCodeFile'] || 'hello.temp.asm.js';
 
   // utilities
 
@@ -1766,6 +1755,16 @@ function integrateWasmJS(Module) {
       Module['asm'] = exports;
       Module["usingWasm"] = true;
     }
+    Module['printErr']('asynchronously preparing wasm');
+    addRunDependency('wasm-instantiate'); // we can't run yet
+    WebAssembly.instantiate(getBinary(), info).then(function(output) {
+      // receiveInstance() will swap in the exports (to Module.asm) so they can be called
+      receiveInstance(output.instance);
+      removeRunDependency('wasm-instantiate');
+    }).catch(function(reason) {
+      Module['printErr']('failed to asynchronously prepare wasm:\n  ' + reason);
+    });
+    return {}; // no exports yet; we'll fill them in later
     var instance;
     try {
       instance = new WebAssembly.Instance(new WebAssembly.Module(getBinary()), info)
@@ -1851,17 +1850,25 @@ function integrateWasmJS(Module) {
 
   // Memory growth integration code
   Module['reallocBuffer'] = function(size) {
-    size = Math.ceil(size / wasmPageSize) * wasmPageSize; // round up to wasm page size
+    var PAGE_MULTIPLE = Module["usingWasm"] ? WASM_PAGE_SIZE : ASMJS_PAGE_SIZE; // In wasm, heap size must be a multiple of 64KB. In asm.js, they need to be multiples of 16MB.
+    size = alignUp(size, PAGE_MULTIPLE); // round up to wasm page size
     var old = Module['buffer'];
-    var result = exports['__growWasmMemory'](size / wasmPageSize); // tiny wasm method that just does grow_memory
+    var oldSize = old.byteLength;
     if (Module["usingWasm"]) {
-      if (result !== (-1 | 0)) {
-        // success in native wasm memory growth, get the buffer from the memory
-        return Module['buffer'] = Module['wasmMemory'].buffer;
-      } else {
+      try {
+        var result = Module['wasmMemory'].grow((size - oldSize) / wasmPageSize); // .grow() takes a delta compared to the previous size
+        if (result !== (-1 | 0)) {
+          // success in native wasm memory growth, get the buffer from the memory
+          return Module['buffer'] = Module['wasmMemory'].buffer;
+        } else {
+          return null;
+        }
+      } catch(e) {
+        console.error('Module.reallocBuffer: Attempted to grow from ' + oldSize  + ' bytes to ' + size + ' bytes, but got error: ' + e);
         return null;
       }
     } else {
+      exports['__growWasmMemory']((size - oldSize) / wasmPageSize); // tiny wasm method that just does grow_memory
       // in interpreter, we replace Module.buffer if we allocate
       return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
     }
@@ -2152,7 +2159,7 @@ function invoke_ii(index,a1) {
     return Module["dynCall_ii"](index,a1);
   } catch(e) {
     if (typeof e !== 'number' && e !== 'longjmp') throw e;
-    asm["setThrew"](1, 0);
+    Module["setThrew"](1, 0);
   }
 }
 
@@ -2161,7 +2168,7 @@ function invoke_iiii(index,a1,a2,a3) {
     return Module["dynCall_iiii"](index,a1,a2,a3);
   } catch(e) {
     if (typeof e !== 'number' && e !== 'longjmp') throw e;
-    asm["setThrew"](1, 0);
+    Module["setThrew"](1, 0);
   }
 }
 
@@ -2170,7 +2177,7 @@ function invoke_vi(index,a1) {
     Module["dynCall_vi"](index,a1);
   } catch(e) {
     if (typeof e !== 'number' && e !== 'longjmp') throw e;
-    asm["setThrew"](1, 0);
+    Module["setThrew"](1, 0);
   }
 }
 
@@ -2187,6 +2194,12 @@ assert(!runtimeExited, 'the runtime was exited (use NO_EXIT_RUNTIME to keep it a
 return real__malloc.apply(null, arguments);
 };
 
+var real_getTempRet0 = asm["getTempRet0"]; asm["getTempRet0"] = function() {
+assert(runtimeInitialized, 'you need to wait for the runtime to be ready (e.g. wait for main() to be called)');
+assert(!runtimeExited, 'the runtime was exited (use NO_EXIT_RUNTIME to keep it alive after main() exits)');
+return real_getTempRet0.apply(null, arguments);
+};
+
 var real__free = asm["_free"]; asm["_free"] = function() {
 assert(runtimeInitialized, 'you need to wait for the runtime to be ready (e.g. wait for main() to be called)');
 assert(!runtimeExited, 'the runtime was exited (use NO_EXIT_RUNTIME to keep it alive after main() exits)');
@@ -2199,16 +2212,52 @@ assert(!runtimeExited, 'the runtime was exited (use NO_EXIT_RUNTIME to keep it a
 return real__main.apply(null, arguments);
 };
 
+var real_setTempRet0 = asm["setTempRet0"]; asm["setTempRet0"] = function() {
+assert(runtimeInitialized, 'you need to wait for the runtime to be ready (e.g. wait for main() to be called)');
+assert(!runtimeExited, 'the runtime was exited (use NO_EXIT_RUNTIME to keep it alive after main() exits)');
+return real_setTempRet0.apply(null, arguments);
+};
+
+var real_establishStackSpace = asm["establishStackSpace"]; asm["establishStackSpace"] = function() {
+assert(runtimeInitialized, 'you need to wait for the runtime to be ready (e.g. wait for main() to be called)');
+assert(!runtimeExited, 'the runtime was exited (use NO_EXIT_RUNTIME to keep it alive after main() exits)');
+return real_establishStackSpace.apply(null, arguments);
+};
+
 var real__pthread_self = asm["_pthread_self"]; asm["_pthread_self"] = function() {
 assert(runtimeInitialized, 'you need to wait for the runtime to be ready (e.g. wait for main() to be called)');
 assert(!runtimeExited, 'the runtime was exited (use NO_EXIT_RUNTIME to keep it alive after main() exits)');
 return real__pthread_self.apply(null, arguments);
 };
 
+var real_stackSave = asm["stackSave"]; asm["stackSave"] = function() {
+assert(runtimeInitialized, 'you need to wait for the runtime to be ready (e.g. wait for main() to be called)');
+assert(!runtimeExited, 'the runtime was exited (use NO_EXIT_RUNTIME to keep it alive after main() exits)');
+return real_stackSave.apply(null, arguments);
+};
+
 var real__sbrk = asm["_sbrk"]; asm["_sbrk"] = function() {
 assert(runtimeInitialized, 'you need to wait for the runtime to be ready (e.g. wait for main() to be called)');
 assert(!runtimeExited, 'the runtime was exited (use NO_EXIT_RUNTIME to keep it alive after main() exits)');
 return real__sbrk.apply(null, arguments);
+};
+
+var real_stackRestore = asm["stackRestore"]; asm["stackRestore"] = function() {
+assert(runtimeInitialized, 'you need to wait for the runtime to be ready (e.g. wait for main() to be called)');
+assert(!runtimeExited, 'the runtime was exited (use NO_EXIT_RUNTIME to keep it alive after main() exits)');
+return real_stackRestore.apply(null, arguments);
+};
+
+var real_stackAlloc = asm["stackAlloc"]; asm["stackAlloc"] = function() {
+assert(runtimeInitialized, 'you need to wait for the runtime to be ready (e.g. wait for main() to be called)');
+assert(!runtimeExited, 'the runtime was exited (use NO_EXIT_RUNTIME to keep it alive after main() exits)');
+return real_stackAlloc.apply(null, arguments);
+};
+
+var real_setThrew = asm["setThrew"]; asm["setThrew"] = function() {
+assert(runtimeInitialized, 'you need to wait for the runtime to be ready (e.g. wait for main() to be called)');
+assert(!runtimeExited, 'the runtime was exited (use NO_EXIT_RUNTIME to keep it alive after main() exits)');
+return real_setThrew.apply(null, arguments);
 };
 
 var real__fflush = asm["_fflush"]; asm["_fflush"] = function() {
@@ -2222,28 +2271,36 @@ assert(runtimeInitialized, 'you need to wait for the runtime to be ready (e.g. w
 assert(!runtimeExited, 'the runtime was exited (use NO_EXIT_RUNTIME to keep it alive after main() exits)');
 return real____errno_location.apply(null, arguments);
 };
-var _malloc = Module["_malloc"] = asm["_malloc"];
-var _free = Module["_free"] = asm["_free"];
-var _main = Module["_main"] = asm["_main"];
-var _pthread_self = Module["_pthread_self"] = asm["_pthread_self"];
-var _memset = Module["_memset"] = asm["_memset"];
-var _sbrk = Module["_sbrk"] = asm["_sbrk"];
-var _memcpy = Module["_memcpy"] = asm["_memcpy"];
-var _fflush = Module["_fflush"] = asm["_fflush"];
-var ___errno_location = Module["___errno_location"] = asm["___errno_location"];
-var runPostSets = Module["runPostSets"] = asm["runPostSets"];
-var dynCall_ii = Module["dynCall_ii"] = asm["dynCall_ii"];
-var dynCall_iiii = Module["dynCall_iiii"] = asm["dynCall_iiii"];
-var dynCall_vi = Module["dynCall_vi"] = asm["dynCall_vi"];
+Module["asm"] = asm;
+var _malloc = Module["_malloc"] = function() { return Module["asm"]["_malloc"].apply(null, arguments) };
+var getTempRet0 = Module["getTempRet0"] = function() { return Module["asm"]["getTempRet0"].apply(null, arguments) };
+var _free = Module["_free"] = function() { return Module["asm"]["_free"].apply(null, arguments) };
+var _main = Module["_main"] = function() { return Module["asm"]["_main"].apply(null, arguments) };
+var setTempRet0 = Module["setTempRet0"] = function() { return Module["asm"]["setTempRet0"].apply(null, arguments) };
+var establishStackSpace = Module["establishStackSpace"] = function() { return Module["asm"]["establishStackSpace"].apply(null, arguments) };
+var _pthread_self = Module["_pthread_self"] = function() { return Module["asm"]["_pthread_self"].apply(null, arguments) };
+var stackSave = Module["stackSave"] = function() { return Module["asm"]["stackSave"].apply(null, arguments) };
+var _memset = Module["_memset"] = function() { return Module["asm"]["_memset"].apply(null, arguments) };
+var _sbrk = Module["_sbrk"] = function() { return Module["asm"]["_sbrk"].apply(null, arguments) };
+var stackRestore = Module["stackRestore"] = function() { return Module["asm"]["stackRestore"].apply(null, arguments) };
+var _memcpy = Module["_memcpy"] = function() { return Module["asm"]["_memcpy"].apply(null, arguments) };
+var stackAlloc = Module["stackAlloc"] = function() { return Module["asm"]["stackAlloc"].apply(null, arguments) };
+var setThrew = Module["setThrew"] = function() { return Module["asm"]["setThrew"].apply(null, arguments) };
+var _fflush = Module["_fflush"] = function() { return Module["asm"]["_fflush"].apply(null, arguments) };
+var ___errno_location = Module["___errno_location"] = function() { return Module["asm"]["___errno_location"].apply(null, arguments) };
+var runPostSets = Module["runPostSets"] = function() { return Module["asm"]["runPostSets"].apply(null, arguments) };
+var dynCall_ii = Module["dynCall_ii"] = function() { return Module["asm"]["dynCall_ii"].apply(null, arguments) };
+var dynCall_iiii = Module["dynCall_iiii"] = function() { return Module["asm"]["dynCall_iiii"].apply(null, arguments) };
+var dynCall_vi = Module["dynCall_vi"] = function() { return Module["asm"]["dynCall_vi"].apply(null, arguments) };
 ;
 
-Runtime.stackAlloc = asm['stackAlloc'];
-Runtime.stackSave = asm['stackSave'];
-Runtime.stackRestore = asm['stackRestore'];
-Runtime.establishStackSpace = asm['establishStackSpace'];
+Runtime.stackAlloc = Module['stackAlloc'];
+Runtime.stackSave = Module['stackSave'];
+Runtime.stackRestore = Module['stackRestore'];
+Runtime.establishStackSpace = Module['establishStackSpace'];
 
-Runtime.setTempRet0 = asm['setTempRet0'];
-Runtime.getTempRet0 = asm['getTempRet0'];
+Runtime.setTempRet0 = Module['setTempRet0'];
+Runtime.getTempRet0 = Module['getTempRet0'];
 
 
 

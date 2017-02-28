@@ -1102,11 +1102,14 @@ Module["stackTrace"] = stackTrace;
 
 // Memory management
 
-var PAGE_SIZE = 4096;
+var PAGE_SIZE = 16384;
+var WASM_PAGE_SIZE = 65536;
+var ASMJS_PAGE_SIZE = 16777216;
+var MIN_TOTAL_MEMORY = 16777216;
 
-function alignMemoryPage(x) {
-  if (x % 4096 > 0) {
-    x += (4096 - (x % 4096));
+function alignUp(x, multiple) {
+  if (x % multiple > 0) {
+    x += multiple - (x % multiple);
   }
   return x;
 }
@@ -1151,20 +1154,7 @@ function enlargeMemory() {
 
 var TOTAL_STACK = Module['TOTAL_STACK'] || 5242880;
 var TOTAL_MEMORY = Module['TOTAL_MEMORY'] || 16777216;
-
-var WASM_PAGE_SIZE = 64 * 1024;
-
-var totalMemory = WASM_PAGE_SIZE;
-while (totalMemory < TOTAL_MEMORY || totalMemory < 2*TOTAL_STACK) {
-  if (totalMemory < 16*1024*1024) {
-    totalMemory *= 2;
-  } else {
-    totalMemory += 16*1024*1024;
-  }
-}
-if (totalMemory !== TOTAL_MEMORY) {
-  TOTAL_MEMORY = totalMemory;
-}
+if (TOTAL_MEMORY < TOTAL_STACK) Module.printErr('TOTAL_MEMORY should be larger than TOTAL_STACK, was ' + TOTAL_MEMORY + '! (TOTAL_STACK=' + TOTAL_STACK + ')');
 
 // Initialize the runtime's memory
 
@@ -1502,7 +1492,7 @@ function integrateWasmJS(Module) {
 
   var wasmTextFile = Module['wasmTextFile'] || 'hello2.wast';
   var wasmBinaryFile = Module['wasmBinaryFile'] || 'hello2.wasm';
-  var asmjsCodeFile = Module['asmjsCodeFile'] || 'hello2.asm.js';
+  var asmjsCodeFile = Module['asmjsCodeFile'] || 'hello2.temp.asm.js';
 
   // utilities
 
@@ -1664,6 +1654,8 @@ function integrateWasmJS(Module) {
       // receiveInstance() will swap in the exports (to Module.asm) so they can be called
       receiveInstance(output.instance);
       removeRunDependency('wasm-instantiate');
+    }).catch(function(reason) {
+      Module['printErr']('failed to asynchronously prepare wasm:\n  ' + reason);
     });
     return {}; // no exports yet; we'll fill them in later
     var instance;
@@ -1751,17 +1743,24 @@ function integrateWasmJS(Module) {
 
   // Memory growth integration code
   Module['reallocBuffer'] = function(size) {
-    size = Math.ceil(size / wasmPageSize) * wasmPageSize; // round up to wasm page size
+    var PAGE_MULTIPLE = Module["usingWasm"] ? WASM_PAGE_SIZE : ASMJS_PAGE_SIZE; // In wasm, heap size must be a multiple of 64KB. In asm.js, they need to be multiples of 16MB.
+    size = alignUp(size, PAGE_MULTIPLE); // round up to wasm page size
     var old = Module['buffer'];
-    var result = exports['__growWasmMemory'](size / wasmPageSize); // tiny wasm method that just does grow_memory
+    var oldSize = old.byteLength;
     if (Module["usingWasm"]) {
-      if (result !== (-1 | 0)) {
-        // success in native wasm memory growth, get the buffer from the memory
-        return Module['buffer'] = Module['wasmMemory'].buffer;
-      } else {
+      try {
+        var result = Module['wasmMemory'].grow((size - oldSize) / wasmPageSize); // .grow() takes a delta compared to the previous size
+        if (result !== (-1 | 0)) {
+          // success in native wasm memory growth, get the buffer from the memory
+          return Module['buffer'] = Module['wasmMemory'].buffer;
+        } else {
+          return null;
+        }
+      } catch(e) {
         return null;
       }
     } else {
+      exports['__growWasmMemory']((size - oldSize) / wasmPageSize); // tiny wasm method that just does grow_memory
       // in interpreter, we replace Module.buffer if we allocate
       return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
     }
@@ -2041,7 +2040,7 @@ function invoke_ii(index,a1) {
     return Module["dynCall_ii"](index,a1);
   } catch(e) {
     if (typeof e !== 'number' && e !== 'longjmp') throw e;
-    asm["setThrew"](1, 0);
+    Module["setThrew"](1, 0);
   }
 }
 
@@ -2050,7 +2049,7 @@ function invoke_iiii(index,a1,a2,a3) {
     return Module["dynCall_iiii"](index,a1,a2,a3);
   } catch(e) {
     if (typeof e !== 'number' && e !== 'longjmp') throw e;
-    asm["setThrew"](1, 0);
+    Module["setThrew"](1, 0);
   }
 }
 
@@ -2059,7 +2058,7 @@ function invoke_vi(index,a1) {
     Module["dynCall_vi"](index,a1);
   } catch(e) {
     if (typeof e !== 'number' && e !== 'longjmp') throw e;
-    asm["setThrew"](1, 0);
+    Module["setThrew"](1, 0);
   }
 }
 
@@ -2072,27 +2071,34 @@ var asm =Module["asm"]// EMSCRIPTEN_END_ASM
 
 Module["asm"] = asm;
 var _malloc = Module["_malloc"] = function() { return Module["asm"]["_malloc"].apply(null, arguments) };
+var getTempRet0 = Module["getTempRet0"] = function() { return Module["asm"]["getTempRet0"].apply(null, arguments) };
 var _free = Module["_free"] = function() { return Module["asm"]["_free"].apply(null, arguments) };
 var runPostSets = Module["runPostSets"] = function() { return Module["asm"]["runPostSets"].apply(null, arguments) };
+var setTempRet0 = Module["setTempRet0"] = function() { return Module["asm"]["setTempRet0"].apply(null, arguments) };
+var establishStackSpace = Module["establishStackSpace"] = function() { return Module["asm"]["establishStackSpace"].apply(null, arguments) };
 var _pthread_self = Module["_pthread_self"] = function() { return Module["asm"]["_pthread_self"].apply(null, arguments) };
+var stackSave = Module["stackSave"] = function() { return Module["asm"]["stackSave"].apply(null, arguments) };
 var _memset = Module["_memset"] = function() { return Module["asm"]["_memset"].apply(null, arguments) };
 var _sbrk = Module["_sbrk"] = function() { return Module["asm"]["_sbrk"].apply(null, arguments) };
 var _myFunction = Module["_myFunction"] = function() { return Module["asm"]["_myFunction"].apply(null, arguments) };
 var _memcpy = Module["_memcpy"] = function() { return Module["asm"]["_memcpy"].apply(null, arguments) };
+var stackAlloc = Module["stackAlloc"] = function() { return Module["asm"]["stackAlloc"].apply(null, arguments) };
+var setThrew = Module["setThrew"] = function() { return Module["asm"]["setThrew"].apply(null, arguments) };
 var _fflush = Module["_fflush"] = function() { return Module["asm"]["_fflush"].apply(null, arguments) };
+var stackRestore = Module["stackRestore"] = function() { return Module["asm"]["stackRestore"].apply(null, arguments) };
 var ___errno_location = Module["___errno_location"] = function() { return Module["asm"]["___errno_location"].apply(null, arguments) };
 var dynCall_ii = Module["dynCall_ii"] = function() { return Module["asm"]["dynCall_ii"].apply(null, arguments) };
 var dynCall_iiii = Module["dynCall_iiii"] = function() { return Module["asm"]["dynCall_iiii"].apply(null, arguments) };
 var dynCall_vi = Module["dynCall_vi"] = function() { return Module["asm"]["dynCall_vi"].apply(null, arguments) };
 ;
 
-Runtime.stackAlloc = asm['stackAlloc'];
-Runtime.stackSave = asm['stackSave'];
-Runtime.stackRestore = asm['stackRestore'];
-Runtime.establishStackSpace = asm['establishStackSpace'];
+Runtime.stackAlloc = Module['stackAlloc'];
+Runtime.stackSave = Module['stackSave'];
+Runtime.stackRestore = Module['stackRestore'];
+Runtime.establishStackSpace = Module['establishStackSpace'];
 
-Runtime.setTempRet0 = asm['setTempRet0'];
-Runtime.getTempRet0 = asm['getTempRet0'];
+Runtime.setTempRet0 = Module['setTempRet0'];
+Runtime.getTempRet0 = Module['getTempRet0'];
 
 
 
