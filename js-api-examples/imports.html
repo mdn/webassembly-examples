@@ -1,0 +1,23 @@
+<!doctype html>
+
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <title>WASM test</title>
+  </head>
+
+  <body>
+    <script>
+      fetch('simple.wasm').then(response =>
+        response.arrayBuffer()
+      ).then(bytes =>
+        WebAssembly.compile(bytes)
+      ).then(function(mod) {
+        var imports = WebAssembly.Module.imports(mod);
+        console.log(imports[0]);
+      });
+    </script>
+  </body>
+
+</html>
