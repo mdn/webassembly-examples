@@ -9,9 +9,10 @@ var importObject = {
 onmessage = function(e) {
   console.log('module received from main thread');
   var mod = e.data;
-  
-  var instance = new WebAssembly.Instance(mod, importObject);
-  instance.exports.exported_func();
+
+  WebAssembly.instantiate(mod, importObject).then(function(instance) {
+    instance.exports.exported_func();
+  });
 
   var exports = WebAssembly.Module.exports(mod);
   console.log(exports[0]);
