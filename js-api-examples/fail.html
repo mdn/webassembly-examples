@@ -1,0 +1,19 @@
+<!doctype html>
+
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <title>WASM test - exception</title>
+  </head>
+
+  <body>
+    <script src="../wasm-utils.js"></script>
+    <script>
+      fetchAndInstantiate('fail.wasm').then(function(instance) {
+        instance.exports.fail_me();
+      });
+    </script>
+  </body>
+
+</html>
