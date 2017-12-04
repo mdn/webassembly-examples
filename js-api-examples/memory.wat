@@ -1,5 +1,5 @@
 (module
-  (memory (export "mem") 1)
+  (memory (import "js" "mem") 1)
   (func (export "accumulate") (param $ptr i32) (param $len i32) (result i32)
     (local $end i32)
     (local $sum i32)
