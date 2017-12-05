@@ -12,8 +12,8 @@
     <script>
       var memory = new WebAssembly.Memory({initial:10, maximum:100});
 
-      fetchAndInstantiate('memory.wasm').then(function(instance) {
-        var i32 = new Uint32Array(instance.exports.mem.buffer);
+      fetchAndInstantiate('memory.wasm', { js: { mem: memory } }).then(instance => {
+        var i32 = new Uint32Array(memory.buffer);
         for (var i = 0; i < 10; i++) {
           i32[i] = i;
         }
