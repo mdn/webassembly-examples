@@ -8,17 +8,23 @@
   </head>
 
   <body>
-    <script src="../wasm-utils.js"></script>
     <script>
       var table = new WebAssembly.Table({ element: "anyfunc", initial: 1, maximum: 10 });
       table.grow(1);
       console.log(table.length);
 
-      fetchAndInstantiate('table.wasm').then(function(instance) {
-        var tbl = instance.exports.tbl;
+      WebAssembly.instantiateStreaming(fetch('simple.wasm'), importObject)
+      .then(function(obj) {
+        var tbl = obj.instance.exports.tbl;
         console.log(tbl.get(0)());  // 13
         console.log(tbl.get(1)());  // 42
       });
+
+      // fetchAndInstantiate('table.wasm').then(function(instance) {
+      //   var tbl = instance.exports.tbl;
+      //   console.log(tbl.get(0)());  // 13
+      //   console.log(tbl.get(1)());  // 42
+      // });
     </script>
   </body>
 

@@ -8,7 +8,6 @@
   </head>
 
   <body>
-    <script src="../wasm-utils.js"></script>
     <script>
       var importObject = {
         imports: {
@@ -18,9 +17,12 @@
         }
       };
 
-      fetchAndInstantiate('simple.wasm', importObject).then(function(instance) {
-        instance.exports.exported_func();
-      });
+      WebAssembly.instantiateStreaming(fetch('simple.wasm'), importObject)
+      .then(obj => obj.instance.exports.exported_func());
+
+      // fetchAndInstantiate('simple.wasm', importObject).then(function(instance) {
+      //   instance.exports.exported_func();
+      // });
     </script>
   </body>
 

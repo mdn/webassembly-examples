@@ -11,13 +11,18 @@
     <script>
       var worker = new Worker("wasm_worker.js");
 
-      fetch('simple.wasm').then(response =>
-        response.arrayBuffer()
-      ).then(bytes =>
-        WebAssembly.compile(bytes)
-      ).then(mod =>
+      WebAssembly.compileStreaming(fetch('simple.wasm'))
+      .then(mod =>
         worker.postMessage(mod)
       );
+
+      // fetch('simple.wasm').then(response =>
+      //   response.arrayBuffer()
+      // ).then(bytes =>
+      //   WebAssembly.compile(bytes)
+      // ).then(mod =>
+      //   worker.postMessage(mod)
+      // );
     </script>
   </body>
 

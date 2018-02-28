@@ -8,12 +8,16 @@
   </head>
 
   <body>
-    <script src="../wasm-utils.js"></script>
     <script>
 
-    fetchAndInstantiate('add.wasm').then(function(instance) {
-       console.log(instance.exports.add(1, 2));  // "3"
+    WebAssembly.instantiateStreaming(fetch('add.wasm'))
+    .then(obj => {
+       console.log(obj.instance.exports.add(1, 2));  // "3"
     });
+
+    // fetchAndInstantiate('add.wasm').then(function(instance) {
+    //    console.log(instance.exports.add(1, 2));  // "3"
+    // });
     </script>
   </body>
 

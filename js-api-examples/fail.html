@@ -8,11 +8,9 @@
   </head>
 
   <body>
-    <script src="../wasm-utils.js"></script>
     <script>
-      fetchAndInstantiate('fail.wasm').then(function(instance) {
-        instance.exports.fail_me();
-      });
+      WebAssembly.instantiateStreaming(fetch('fail.wasm'))
+      .then(obj => obj.instance.exports.fail_me());
     </script>
   </body>
 
