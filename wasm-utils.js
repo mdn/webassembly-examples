@@ -55,16 +55,6 @@ function instantiateCachedURL(dbVersion, url, importObject) {
     request.onsuccess = err => { console.log(`Successfully stored ${url} in wasm cache`) };
   }
 
-  // This helper function fetches 'url', compiles it into a Module,
-  // instantiates the Module with the given import object.
-  // function fetchAndInstantiate() {
-  //   return fetch(url).then(response =>
-  //     response.arrayBuffer()
-  //   ).then(buffer =>
-  //     WebAssembly.instantiate(buffer, importObject)
-  //   )
-  // }
-
   // With all the Promise helper functions defined, we can now express the core
   // logic of an IndexedDB cache lookup. We start by trying to open a database.
   return openDatabase().then(db => {
@@ -77,7 +67,7 @@ function instantiateCachedURL(dbVersion, url, importObject) {
       // Nope! Compile from scratch and then store the compiled Module in 'db'
       // with key 'url' for next time.
       console.log(errMsg);
-      return instantiateStreaming(fetch(url)).then(results => {
+      return WebAssembly.instantiateStreaming(fetch(url)).then(results => {
         storeInDatabase(db, results.module);
         return results.instance;
       });
@@ -88,8 +78,8 @@ function instantiateCachedURL(dbVersion, url, importObject) {
     // to simply fetching and compiling the module and don't try to store the
     // results.
     console.log(errMsg);
-    return instantiateSteaming(fetch(url)).then(results =>
-      results.instance
-    );
+    return WebAssembly.instantiateSteaming(fetch(url)).then(results => {
+      return results.instance
+    });
   });
 }
