@@ -11,7 +11,7 @@
     <script>
       var otherTable = new WebAssembly.Table({ element: "anyfunc", initial: 2 });
 
-      WebAssembly.instantiateStreaming(fetch('table.wasm'), importObject)
+      WebAssembly.instantiateStreaming(fetch('table.wasm'))
       .then(obj => {
         var tbl = obj.instance.exports.tbl;
         console.log(tbl.get(0)());  // 13

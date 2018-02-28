@@ -20,7 +20,7 @@
         }
       };
 
-      WebAssembly.instantiateStreaming(fetch('simple.wasm'), importObject)
+      WebAssembly.instantiateStreaming(fetch('table2.wasm'), importObject)
       .then(function(obj) {
         console.log(tbl.length);
         console.log(tbl.get(0)());

@@ -17,8 +17,8 @@
     };
 
     Promise.all([
-      WebAssembly.instantiateStreaming(fetch('shared0.wasm', importObj),
-      WebAssembly.instantiateStreaming(fetch('shared1.wasm', importObj)
+      WebAssembly.instantiateStreaming(fetch('shared0.wasm'), importObj),
+      WebAssembly.instantiateStreaming(fetch('shared1.wasm'), importObj)
     ]).then(function(results) {
       console.log(results[1].instance.exports.doIt());  // prints 42
     });

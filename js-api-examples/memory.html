@@ -11,7 +11,7 @@
     <script>
       var memory = new WebAssembly.Memory({initial:10, maximum:100});
 
-      WebAssembly.instantiateStreaming(fetch('simple.wasm'), importObject)
+      WebAssembly.instantiateStreaming(fetch('simple.wasm'), { js: { mem: memory } })
       .then(obj => {
         var i32 = new Uint32Array(memory.buffer);
         for (var i = 0; i < 10; i++) {
