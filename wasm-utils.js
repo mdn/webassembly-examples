@@ -78,7 +78,7 @@ function instantiateCachedURL(dbVersion, url, importObject) {
     // to simply fetching and compiling the module and don't try to store the
     // results.
     console.log(errMsg);
-    return WebAssembly.instantiateSteaming(fetch(url)).then(results => {
+    return WebAssembly.instantiateStreaming(fetch(url)).then(results => {
       return results.instance
     });
   });
