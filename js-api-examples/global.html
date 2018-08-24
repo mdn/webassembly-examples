@@ -20,7 +20,7 @@
     assertEq("WebAssembly.Global exists", typeof WebAssembly.Global, "function");
 
     const global = new WebAssembly.Global({value:'i32', mutable:true}, 0);
-    WebAssembly.instantiateStreaming(fetch('test.wasm'), { js: { global } })
+    WebAssembly.instantiateStreaming(fetch('global.wasm'), { js: { global } })
     .then(({instance}) => {
         assertEq("getting initial value from wasm", instance.exports.getGlobal(), 0);
         global.value = 42;
