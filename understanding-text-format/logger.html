@@ -8,7 +8,6 @@
   </head>
 
   <body>
-    <script src="../wasm-utils.js"></script>
     <script>
       var importObject = {
         console: {
@@ -18,8 +17,9 @@
         }
       };
 
-      fetchAndInstantiate('logger.wasm', importObject).then(function(instance) {
-        instance.exports.logIt();
+      WebAssembly.instantiateStreaming(fetch('logger.wasm'), importObject)
+      .then(obj => {
+        obj.instance.exports.logIt();
       });
     </script>
   </body>

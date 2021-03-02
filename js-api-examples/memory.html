@@ -8,16 +8,16 @@
   </head>
 
   <body>
-    <script src="../wasm-utils.js"></script>
     <script>
       var memory = new WebAssembly.Memory({initial:10, maximum:100});
 
-      fetchAndInstantiate('memory.wasm').then(function(instance) {
-        var i32 = new Uint32Array(instance.exports.mem.buffer);
+      WebAssembly.instantiateStreaming(fetch('memory.wasm'), { js: { mem: memory } })
+      .then(obj => {
+        var i32 = new Uint32Array(memory.buffer);
         for (var i = 0; i < 10; i++) {
           i32[i] = i;
         }
-        var sum = instance.exports.accumulate(0, 10);
+        var sum = obj.instance.exports.accumulate(0, 10);
         console.log(sum);
       });
     </script>

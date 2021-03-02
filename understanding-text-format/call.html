@@ -8,10 +8,10 @@
   </head>
 
   <body>
-    <script src="../wasm-utils.js"></script>
     <script>
-      fetchAndInstantiate('call.wasm').then(function(instance) {
-         console.log(instance.exports.getAnswerPlus1());  // "43"
+      WebAssembly.instantiateStreaming(fetch('call.wasm'))
+      .then(obj => {
+         console.log(obj.instance.exports.getAnswerPlus1());  // "43"
       });
     </script>
   </body>

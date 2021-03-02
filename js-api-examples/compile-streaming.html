@@ -1,0 +1,28 @@
+<!doctype html>
+
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <title>WASM compileStreaming() test</title>
+  </head>
+
+  <body>
+
+
+    <script>
+      var importObject = { imports: { imported_func: arg => console.log(arg) } };
+
+      // fetch('simple.wasm')
+      // .then(response => response.arrayBuffer())
+      // .then(bytes => WebAssembly.compile(bytes))
+      // .then(module => WebAssembly.instantiate(module, importObject))
+      // .then(instance => instance.exports.exported_func());
+
+      WebAssembly.compileStreaming(fetch('simple.wasm'))
+      .then(module => WebAssembly.instantiate(module, importObject))
+      .then(instance => instance.exports.exported_func());
+    </script>
+  </body>
+
+</html>

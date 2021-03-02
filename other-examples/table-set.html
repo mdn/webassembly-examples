@@ -8,12 +8,12 @@
   </head>
 
   <body>
-    <script src="../wasm-utils.js"></script>
     <script>
       var otherTable = new WebAssembly.Table({ element: "anyfunc", initial: 2 });
 
-      fetchAndInstantiate('table.wasm').then(function(instance) {
-        var tbl = instance.exports.tbl;
+      WebAssembly.instantiateStreaming(fetch('table.wasm'))
+      .then(obj => {
+        var tbl = obj.instance.exports.tbl;
         console.log(tbl.get(0)());  // 13
         console.log(tbl.get(1)());  // 42
 
