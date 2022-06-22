@@ -10,7 +10,7 @@
   <body>
     <script>
 
-    WebAssembly.instantiateStreaming(fetch('add.wasm'))
+    WebAssembly.instantiateStreaming(fetch("add.wasm"))
     .then(obj => {
        console.log(obj.instance.exports.add(1, 2));  // "3"
     });
