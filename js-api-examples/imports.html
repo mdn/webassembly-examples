@@ -9,9 +9,9 @@
 
   <body>
     <script>
-      WebAssembly.compileStreaming(fetch('simple.wasm'))
-      .then(function(mod) {
-        var imports = WebAssembly.Module.imports(mod);
+      WebAssembly.compileStreaming(fetch("simple.wasm"))
+      .then(module => {
+        const imports = WebAssembly.Module.imports(module);
         console.log(imports[0]);
       });
     </script>
