@@ -9,7 +9,7 @@
 
   <body>
     <script>
-      WebAssembly.instantiateStreaming(fetch('wasm-table.wasm'))
+      WebAssembly.instantiateStreaming(fetch("wasm-table.wasm"))
       .then(obj => {
         console.log(obj.instance.exports.callByIndex(0)); // returns 42
         console.log(obj.instance.exports.callByIndex(1)); // returns 13
