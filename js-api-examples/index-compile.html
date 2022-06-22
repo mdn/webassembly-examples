@@ -9,12 +9,12 @@
 
   <body>
     <script>
-      var worker = new Worker("wasm_worker.js");
+      const worker = new Worker("wasm_worker.js");
 
-      WebAssembly.compileStreaming(fetch('simple.wasm'))
-      .then(mod =>
-        worker.postMessage(mod)
-      );
+      WebAssembly.compileStreaming(fetch("simple.wasm"))
+      .then(module => {
+        worker.postMessage(module)
+      });
     </script>
   </body>
 
