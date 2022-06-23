@@ -19,15 +19,18 @@
         }
       };
 
+      // equivalent:
       // fetch("simple.wasm")
       // .then(response => response.arrayBuffer())
       // .then(bytes => WebAssembly.compile(bytes))
       // .then(module => WebAssembly.instantiate(module, importObject))
-      // .then(instance => instance.exports.exported_func());
+      // .then(instance => { instance.exports.exported_func(); });
 
       WebAssembly.compileStreaming(fetch("simple.wasm"))
       .then(module => WebAssembly.instantiate(module, importObject))
-      .then(instance => instance.exports.exported_func());
+      .then(instance => {
+        instance.exports.exported_func();
+      });
     </script>
   </body>
 
