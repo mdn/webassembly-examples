@@ -25,9 +25,9 @@
       request.onload = () => {
         const bytes = request.response;
         WebAssembly.instantiate(bytes, importObject)
-          .then(obj => {
-            obj.instance.exports.exported_func();
-          });
+        .then(obj => {
+          obj.instance.exports.exported_func();
+        });
       };
     </script>
   </body>
