@@ -13,7 +13,7 @@
 
       WebAssembly.compileStreaming(fetch("simple.wasm"))
       .then(module => {
-        worker.postMessage(module)
+        worker.postMessage(module);
       });
     </script>
   </body>
