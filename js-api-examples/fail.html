@@ -11,7 +11,7 @@
     <script>
       WebAssembly.instantiateStreaming(fetch("fail.wasm"))
       .then(obj => {
-        obj.instance.exports.fail_me()
+        obj.instance.exports.fail_me();
       });
     </script>
   </body>
