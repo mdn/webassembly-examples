@@ -1,19 +1,20 @@
-var importObject = {
+const importObject = {
   imports: {
-    imported_func: function(arg) {
+    imported_func: arg => {
       console.log(arg);
     }
   }
 };
 
-onmessage = function(e) {
-  console.log('module received from main thread');
-  var mod = e.data;
+window.onmessage = function(event) {
+  console.log("module received from main thread");
+  const module = event.data;
 
-  WebAssembly.instantiate(mod, importObject).then(function(instance) {
-    instance.exports.exported_func();
-  });
+  WebAssembly.instantiate(module, importObject)
+    .then(instance => {
+      instance.exports.exported_func();
+    });
 
-  var exports = WebAssembly.Module.exports(mod);
+  const exports = WebAssembly.Module.exports(module);
   console.log(exports[0]);
 };
