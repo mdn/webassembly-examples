@@ -9,24 +9,25 @@
 
   <body>
     <script>
-      var importObject = {
+      const importObject = {
         imports: {
-          imported_func: function(arg) {
+          imported_func: arg => {
             console.log(arg);
           }
         }
       };
 
-      request = new XMLHttpRequest();
-      request.open('GET', 'simple.wasm');
-      request.responseType = 'arraybuffer';
+      const request = new XMLHttpRequest();
+      request.open("GET", "simple.wasm");
+      request.responseType = "arraybuffer";
       request.send();
 
-      request.onload = function() {
-        var bytes = request.response;
-        WebAssembly.instantiate(bytes, importObject).then(function(obj) {
-          obj.instance.exports.exported_func();
-        });
+      request.onload = () => {
+        const bytes = request.response;
+        WebAssembly.instantiate(bytes, importObject)
+          .then(obj => {
+            obj.instance.exports.exported_func();
+          });
       };
     </script>
   </body>
