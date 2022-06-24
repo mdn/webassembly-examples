@@ -24,5 +24,9 @@
           (i32.add
             (local.get $ptr)
             (i32.const 4)))
-        (br $top)))
-    (local.get $sum)))
+        (br $top)
+      )
+    )
+    (local.get $sum)
+  )
+)
