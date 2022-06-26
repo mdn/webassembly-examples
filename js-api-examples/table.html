@@ -9,13 +9,17 @@
 
   <body>
     <script>
-      var table = new WebAssembly.Table({ element: "anyfunc", initial: 1, maximum: 10 });
+      const table = new WebAssembly.Table({
+        element: "anyfunc",
+        initial: 1,
+        maximum: 10
+      });
       table.grow(1);
-      console.log(table.length);
+      console.log(table.length);  // 2
 
-      WebAssembly.instantiateStreaming(fetch('table.wasm'))
-      .then(function(obj) {
-        var tbl = obj.instance.exports.tbl;
+      WebAssembly.instantiateStreaming(fetch("table.wasm"))
+      .then(obj => {
+        const tbl = obj.instance.exports.tbl;
         console.log(tbl.get(0)());  // 13
         console.log(tbl.get(1)());  // 42
       });

@@ -11,17 +11,26 @@
 
 
     <script>
-      var importObject = { imports: { imported_func: arg => console.log(arg) } };
+      const importObject = {
+        imports: {
+          imported_func: arg => {
+            console.log(arg);
+          }
+        }
+      };
 
-      // fetch('simple.wasm')
+      // equivalent:
+      // fetch("simple.wasm")
       // .then(response => response.arrayBuffer())
       // .then(bytes => WebAssembly.compile(bytes))
       // .then(module => WebAssembly.instantiate(module, importObject))
-      // .then(instance => instance.exports.exported_func());
+      // .then(instance => { instance.exports.exported_func(); });
 
-      WebAssembly.compileStreaming(fetch('simple.wasm'))
+      WebAssembly.compileStreaming(fetch("simple.wasm"))
       .then(module => WebAssembly.instantiate(module, importObject))
-      .then(instance => instance.exports.exported_func());
+      .then(instance => {
+        instance.exports.exported_func();
+      });
     </script>
   </body>
 

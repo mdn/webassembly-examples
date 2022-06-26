@@ -9,15 +9,15 @@
 
   <body>
     <script>
-      var importObject = {
+      const importObject = {
         console: {
-          log: function(arg) {
+          log: arg => {
             console.log(arg);
           }
         }
       };
 
-      WebAssembly.instantiateStreaming(fetch('logger.wasm'), importObject)
+      WebAssembly.instantiateStreaming(fetch("logger.wasm"), importObject)
       .then(obj => {
         obj.instance.exports.logIt();
       });

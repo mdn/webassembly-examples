@@ -9,9 +9,9 @@
 
   <body>
     <script>
-      WebAssembly.instantiateStreaming(fetch('call.wasm'))
+      WebAssembly.instantiateStreaming(fetch("call.wasm"))
       .then(obj => {
-         console.log(obj.instance.exports.getAnswerPlus1());  // "43"
+        console.log(obj.instance.exports.getAnswerPlus1());  // "43"
       });
     </script>
   </body>

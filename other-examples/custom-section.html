@@ -8,10 +8,10 @@
 
 <body>
     <script>
-        WebAssembly.compileStreaming(fetch('simple-name-section.wasm'))
-        .then(function(mod) {
-          var nameSections = WebAssembly.Module.customSections(mod, "name");
-          if (nameSections.length != 0) {
+        WebAssembly.compileStreaming(fetch("simple-name-section.wasm"))
+        .then(module => {
+          const nameSections = WebAssembly.Module.customSections(module, "name");
+          if (nameSections.length !== 0) {
             console.log("Module contains a name section");
             console.log(nameSections[0]);
           };

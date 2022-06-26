@@ -9,15 +9,18 @@
 
   <body>
     <script>
-      var memory = new WebAssembly.Memory({initial:10, maximum:100});
+      const memory = new WebAssembly.Memory({
+        initial: 10,
+        maximum: 100
+      });
 
-      WebAssembly.instantiateStreaming(fetch('memory.wasm'), { js: { mem: memory } })
+      WebAssembly.instantiateStreaming(fetch("memory.wasm"), { js: { mem: memory } })
       .then(obj => {
-        var i32 = new Uint32Array(memory.buffer);
-        for (var i = 0; i < 10; i++) {
+        const i32 = new Uint32Array(memory.buffer);
+        for (let i = 0; i < 10; i++) {
           i32[i] = i;
         }
-        var sum = obj.instance.exports.accumulate(0, 10);
+        const sum = obj.instance.exports.accumulate(0, 10);
         console.log(sum);
       });
     </script>

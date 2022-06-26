@@ -9,11 +9,11 @@
 
   <body>
     <script>
-      fetch('simple.wasm').then(response =>
+      fetch("simple.wasm").then(response =>
         response.arrayBuffer()
-      ).then(function(bytes) {
-        var valid = WebAssembly.validate(bytes);
-        console.log("The given bytes are " + (valid ? "" : "not ") + "a valid wasm module");
+      ).then(bytes => {
+        const isValid = WebAssembly.validate(bytes);
+        console.log("The given bytes are " + (isValid ? "" : "not ") + "a valid wasm module");
       });
     </script>
   </body>

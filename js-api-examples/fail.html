@@ -9,8 +9,10 @@
 
   <body>
     <script>
-      WebAssembly.instantiateStreaming(fetch('fail.wasm'))
-      .then(obj => obj.instance.exports.fail_me());
+      WebAssembly.instantiateStreaming(fetch("fail.wasm"))
+      .then(obj => {
+        obj.instance.exports.fail_me();
+      });
     </script>
   </body>
 

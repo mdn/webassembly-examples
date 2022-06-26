@@ -9,15 +9,15 @@
 
   <body>
     <script>
-      var memory = new WebAssembly.Memory({ initial : 1 });
+      const memory = new WebAssembly.Memory({ initial: 1 });
 
       function consoleLogString(offset, length) {
-        var bytes = new Uint8Array(memory.buffer, offset, length);
-        var string = new TextDecoder('utf8').decode(bytes);
+        const bytes = new Uint8Array(memory.buffer, offset, length);
+        const string = new TextDecoder("UTF-8").decode(bytes);
         console.log(string);
       }
 
-      var importObject = {
+      const importObject = {
         console: {
           log: consoleLogString
         },
@@ -26,7 +26,7 @@
         }
       };
 
-      WebAssembly.instantiateStreaming(fetch('logger2.wasm'), importObject)
+      WebAssembly.instantiateStreaming(fetch("logger2.wasm"), importObject)
       .then(obj => {
         obj.instance.exports.writeHi();
       });
