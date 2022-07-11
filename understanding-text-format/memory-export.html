@@ -15,7 +15,7 @@
         // views only the first ten elements of the Wasm memory
         const summands = values.subarray(0, 10);
         // sums the first ten elements
-        const sum = summands.reduce((x, y) => x + y);
+        const sum = summands.reduce((sum, summand) => sum + summand);
         console.log(sum);
       });
     </script>
