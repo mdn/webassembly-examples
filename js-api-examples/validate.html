@@ -13,7 +13,7 @@
         response.arrayBuffer()
       ).then(bytes => {
         const isValid = WebAssembly.validate(bytes);
-        console.log("The given bytes are " + (isValid ? "" : "not ") + "a valid wasm module");
+        console.log(`The given bytes ${isValid ? "are" : "are not"} a valid wasm module`);
       });
     </script>
   </body>
