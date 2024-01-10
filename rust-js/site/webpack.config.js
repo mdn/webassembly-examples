@@ -1,19 +1,19 @@
+const CopyPlugin = require("copy-webpack-plugin");
 const path = require("path");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
-  entry: "./src/index.js",
+  entry: "./index.js",
   output: {
     path: path.resolve(__dirname, "dist"),
-    publicPath: "/",
+    filename: "index.js",
   },
   mode: "development",
   experiments: {
     asyncWebAssembly: true,
   },
   plugins: [
-    new HtmlWebpackPlugin({
-      template: "./dist/index.html",
+    new CopyPlugin({
+      patterns: [{ from: "index.html" }],
     }),
   ],
 };
