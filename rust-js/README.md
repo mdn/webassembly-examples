@@ -26,16 +26,14 @@ You should see an alert box that says "Hello, WebAssembly!".
 
 ### Building and running an npm package
 
-To run the Node.js example, you will need to build the package targeting [Bundlers](https://rustwasm.github.io/docs/wasm-bindgen/reference/deployment.html#bundlers), install the Node.js dependencies and then serve the project:
+To run the Node.js example, you will need to build the package targeting [Bundlers](https://rustwasm.github.io/docs/wasm-bindgen/reference/deployment.html#bundlers), install the Node.js dev dependencies and then serve the project:
 
 ```bash
-# Target Bundlers (webpack)
+# Target Bundlers (webpack in our case)
 wasm-pack build --target bundler
 cd site
-# link the hello-wasm package
-npm link hello-wasm
-npm i && npm run build
-npm run serve
+# install the dev dependencies and run the server:
+npm i && npm run serve
 ```
 
 You should see an alert box that says "Hello, WebAssembly with npm!".
