@@ -11,7 +11,7 @@
     <script>
       WebAssembly.instantiateStreaming(fetch("memory-export.wasm"))
       .then(object => {
-        const values = new Uint32Array(object.exports.memory.buffer);
+        const values = new Uint32Array(object.instance.exports.memory.buffer);
         // views only the first ten elements of the Wasm memory
         const summands = values.subarray(0, 10);
         // sums the first ten elements
