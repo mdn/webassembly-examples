@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>WASM multi-memory example</title>
+
+    <style>
+      #log {
+        height: 100px;
+        overflow: scroll;
+        padding: 0.5rem;
+        border: 1px solid black;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>WASM multi-memory example</h1>
+    <p>Log:</p>
+    <pre id="log"></pre>
+
+    <script>
+      const logElement = document.querySelector("#log");
+      function log(text) {
+        logElement.innerText = `${logElement.innerText}${text}\n`;
+        logElement.scrollTop = logElement.scrollHeight;
+      }
+    </script>
+    <script>
+      const memory0 = new WebAssembly.Memory({ initial: 1 });
+      const memory1 = new WebAssembly.Memory({ initial: 1 });
+      let memory2; // Created by module
+
+      function consoleLogString(memoryInstance, offset, length) {
+        let memory;
+        switch (memoryInstance) {
+          case 0:
+            memory = memory0;
+            break;
+          case 1:
+            memory = memory1;
+            break;
+          case 2:
+            memory = memory2;
+            break;
+          // code block
+        }
+        const bytes = new Uint8Array(memory.buffer, offset, length);
+        const string = new TextDecoder("utf8").decode(bytes);
+        log(string);
+      }
+
+      const importObject = {
+        console: { log: consoleLogString },
+        js: { mem0: memory0, mem1: memory1 },
+      };
+
+      WebAssembly.instantiateStreaming(
+        fetch("multi-memory.wasm"),
+        importObject
+      ).then((obj) => {
+        //Get exported memory
+        memory2 = obj.instance.exports.memory2;
+        //Log memoery
+        obj.instance.exports.logAllMemory();
+      });
+    </script>
+  </body>
+</html>
