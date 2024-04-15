@@ -38,7 +38,7 @@
     ;; Log memory index 2, offset 0
     i32.const 2  ;; memory index 2
     i32.const 0  ;; memory offset 0
-    i32.const 12  ;; string length 13
+    i32.const 13  ;; string length 13
     call $logMemory
   )
 
