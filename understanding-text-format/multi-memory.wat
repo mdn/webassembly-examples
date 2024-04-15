@@ -32,7 +32,7 @@
     ;; Log memory index 1, offset 0
     i32.const 1  ;; memory index 1
     i32.const 0  ;; memory offset 0
-    i32.const 20  ;; string length 20
+    i32.const 20  ;; string length 20 - overruns the length of the data for illustration
     call $logMemory
 
     ;; Log memory index 2, offset 0
