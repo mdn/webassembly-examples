@@ -11,7 +11,7 @@ This can be done using the `wat2wasm` tool, which is part of the [WABT: The WebA
 
 Note that some examples use features that are still considered optional.
 These are listed in the [supported proposals](https://github.com/WebAssembly/wabt/#supported-proposals) section on the WABT README.md, along with the flags used to invoke them.
-For exmapole, to build WASM for the [multi-memory](https://github.com/mdn/webassembly-examples/blob/main/understanding-text-format/multi-memory.wat) example you will need to specify the `--enable-multi-memory` flag as shown:
+For exmaple, to build WASM for the [multi-memory](https://github.com/mdn/webassembly-examples/blob/main/understanding-text-format/multi-memory.wat) example you will need to specify the `--enable-multi-memory` flag as shown:
 
 ```sh
 wat2wasm --enable-multi-memory multi-memory.wat
