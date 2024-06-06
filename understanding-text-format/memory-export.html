@@ -10,11 +10,12 @@
     <script>
       WebAssembly.instantiateStreaming(fetch("memory-export.wasm")).then(
         (object) => {
-          const values = new Uint32Array(object.instance.exports.memory.buffer);
+          const values = new DataView(object.instance.exports.memory.buffer);
+          let sum = 0;
           // views only the first ten elements of the Wasm memory
-          const summands = values.subarray(0, 10);
-          // sums the first ten elements
-          const sum = summands.reduce((sum, summand) => sum + summand);
+          for (let i = 0 ; i < 10; i++) {
+            sum += values.getUint32(i * 4, true);
+          }
           console.log(sum);
         }
       );
