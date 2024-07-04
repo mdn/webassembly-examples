@@ -1,5 +1,5 @@
 const importObject = {
-  imports: {
+  my_namespace: {
     imported_func: arg => {
       console.log(arg);
     }
