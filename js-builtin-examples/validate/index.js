@@ -1,6 +1,6 @@
 const compileOptions = {
   builtins: ["js-string"],     // Enable JavaScript string builtins
-  importedStringConstants: "#" // Enable imported global string constants
+  importedStringConstants: "string_constants" // Enable imported global string constants
 }
 
 fetch("log-concat.wasm")
