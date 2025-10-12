@@ -1,5 +1,5 @@
 (module
-  (table 2 anyfunc)
+  (table 2 funcref)
   (func $f1 (result i32)
     i32.const 42
   )
