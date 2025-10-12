@@ -13,9 +13,9 @@
         initial: 2,
         element: "anyfunc"
       });
-      console.log(tbl.length);
-      console.log(tbl.get(0));
-      console.log(tbl.get(1));
+      console.log(tbl.length); // 2
+      console.log(tbl.get(0)); // null
+      console.log(tbl.get(1)); // null
 
       const importObject = {
         js: { tbl }
@@ -23,9 +23,9 @@
 
       WebAssembly.instantiateStreaming(fetch("table2.wasm"), importObject)
       .then(obj => {
-        console.log(tbl.length);
-        console.log(tbl.get(0)());
-        console.log(tbl.get(1)());
+        console.log(tbl.length); // 2
+        console.log(tbl.get(0)()); // 42
+        console.log(tbl.get(1)()); // 83
       });
     </script>
   </body>
