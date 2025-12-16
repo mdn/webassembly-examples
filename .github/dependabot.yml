@@ -5,11 +5,13 @@ updates:
     schedule:
       interval: weekly
     commit-message:
-      prefix: "ci(deps): "
+      prefix: ci
+      include: scope
 
   - package-ecosystem: npm
     directory: rust-js/site
     schedule:
       interval: weekly
     commit-message:
-      prefix: "ci(deps): "
+      prefix: ci
+      include: scope
