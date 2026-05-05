@@ -1,9 +1,10 @@
-<!doctype html>
+<!DOCTYPE html>
 
-<html>
+<html lang="en">
 
   <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebAssembly Globals example</title>
   </head>
   <body>
@@ -12,11 +13,11 @@
     const output = document.getElementById("output");
 
     function assertEq(msg, got, expected) {
-      output.innerHTML += `Testing ${msg}: `;
+      output.innerText += `Testing ${msg}: `;
       if (got !== expected) {
-        output.innerHTML += `FAIL!<br>Got: ${got}<br>Expected: ${expected}<br>`;
+        output.innerText += `FAIL!\nGot: ${got}\nExpected: ${expected}\n`;
       } else {
-        output.innerHTML += `SUCCESS! Got: ${got}<br>`;
+        output.innerText += `SUCCESS! Got: ${got}\n`;
       }
     }
 
