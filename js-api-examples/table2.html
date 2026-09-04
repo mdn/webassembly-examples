@@ -1,9 +1,8 @@
 <!doctype html>
 
 <html>
-
   <head>
-    <meta charset="utf-8">
+    <meta charset="utf-8" />
     <title>Another WASM table example</title>
   </head>
 
@@ -11,23 +10,23 @@
     <script>
       const tbl = new WebAssembly.Table({
         initial: 2,
-        element: "anyfunc"
+        element: "funcref",
       });
       console.log(tbl.length); // 2
       console.log(tbl.get(0)); // null
       console.log(tbl.get(1)); // null
 
       const importObject = {
-        js: { tbl }
+        js: { tbl },
       };
 
-      WebAssembly.instantiateStreaming(fetch("table2.wasm"), importObject)
-      .then(obj => {
-        console.log(tbl.length); // 2
-        console.log(tbl.get(0)()); // 42
-        console.log(tbl.get(1)()); // 83
-      });
+      WebAssembly.instantiateStreaming(fetch("table2.wasm"), importObject).then(
+        (obj) => {
+          console.log(tbl.length); // 2
+          console.log(tbl.get(0)()); // 42
+          console.log(tbl.get(1)()); // 83
+        },
+      );
     </script>
   </body>
-
 </html>
