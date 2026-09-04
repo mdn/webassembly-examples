@@ -25,7 +25,7 @@
   (import "env" "___unlock" (func $___unlock (param i32)))
   (import "env" "___syscall146" (func $___syscall146 (param i32 i32) (result i32)))
   (import "env" "memory" (memory $0 256 256))
-  (import "env" "table" (table 8 8 anyfunc))
+  (import "env" "table" (table 8 8 funcref))
   (import "env" "memoryBase" (global $memoryBase i32))
   (import "env" "tableBase" (global $tableBase i32))
   (global $DYNAMICTOP_PTR (mut i32) (global.get $DYNAMICTOP_PTR$asm2wasm$import))
