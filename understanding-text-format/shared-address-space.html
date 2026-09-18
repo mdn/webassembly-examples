@@ -1,28 +1,26 @@
 <!doctype html>
 
 <html>
-
   <head>
-    <meta charset="utf-8">
+    <meta charset="utf-8" />
     <title>Shared address space example</title>
   </head>
 
   <body>
     <script>
-    const importObject = {
-      js: {
-        memory: new WebAssembly.Memory({ initial: 1 }),
-        table: new WebAssembly.Table({ initial: 1, element: "anyfunc" })
-      }
-    };
+      const importObject = {
+        js: {
+          memory: new WebAssembly.Memory({ initial: 1 }),
+          table: new WebAssembly.Table({ initial: 1, element: "funcref" }),
+        },
+      };
 
-    Promise.all([
-      WebAssembly.instantiateStreaming(fetch("shared0.wasm"), importObject),
-      WebAssembly.instantiateStreaming(fetch("shared1.wasm"), importObject)
-    ]).then(results => {
-      console.log(results[1].instance.exports.doIt());  // prints 42
-    });
+      Promise.all([
+        WebAssembly.instantiateStreaming(fetch("shared0.wasm"), importObject),
+        WebAssembly.instantiateStreaming(fetch("shared1.wasm"), importObject),
+      ]).then((results) => {
+        console.log(results[1].instance.exports.doIt()); // prints 42
+      });
     </script>
   </body>
-
 </html>

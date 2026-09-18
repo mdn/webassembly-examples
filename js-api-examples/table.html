@@ -1,29 +1,26 @@
 <!doctype html>
 
 <html>
-
   <head>
-    <meta charset="utf-8">
+    <meta charset="utf-8" />
     <title>WASM table example</title>
   </head>
 
   <body>
     <script>
       const table = new WebAssembly.Table({
-        element: "anyfunc",
+        element: "funcref",
         initial: 1,
-        maximum: 10
+        maximum: 10,
       });
       table.grow(1);
-      console.log(table.length);  // 2
+      console.log(table.length); // 2
 
-      WebAssembly.instantiateStreaming(fetch("table.wasm"))
-      .then(obj => {
+      WebAssembly.instantiateStreaming(fetch("table.wasm")).then((obj) => {
         const tbl = obj.instance.exports.tbl;
-        console.log(tbl.get(0)());  // 13
-        console.log(tbl.get(1)());  // 42
+        console.log(tbl.get(0)()); // 13
+        console.log(tbl.get(1)()); // 42
       });
     </script>
   </body>
-
 </html>
